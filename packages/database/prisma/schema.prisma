@@ -1,20 +1,224 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") directUrl = env("DIRECT_URL") }
 
-enum Role { ADMIN DONOR VOLUNTEER RECEIVER }
-enum BatchStatus { AVAILABLE RESERVED PICKUP_CONFIRMED IN_TRANSIT PARTIALLY_DELIVERED DELIVERED EXPIRED CANCELLED REQUIRES_REVIEW }
-enum ItemCategory { READY_TO_EAT RAW_RATION INFANT MEDICAL HYGIENE EMERGENCY_ESSENTIAL }
-enum AssignmentStatus { RESERVED PICKUP_CONFIRMED IN_TRANSIT DELIVERED REROUTED CANCELLED }
-enum ReservationStatus { ACTIVE EXPIRED RELEASED CONFIRMED }
+generator client {
+  provider = "prisma-client-js"
+}
 
-model User { id String @id @default(cuid()) email String @unique name String role Role createdAt DateTime @default(now()) updatedAt DateTime @updatedAt donor Donor? volunteer Volunteer? receiver Receiver? events OperationalEvent[] }
-model Donor { id String @id @default(cuid()) userId String @unique name String pickupInstructions String? user User @relation(fields: [userId], references: [id]) batches DonationBatch[] }
-model DonationBatch { id String @id @default(cuid()) publicId String @unique donorId String category ItemCategory description String quantity Int availableQuantity Int unit String collectedAt DateTime? safetyDeadline DateTime handling String? temperatureMin Float? temperatureMax Float? status BatchStatus @default(AVAILABLE) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt donor Donor @relation(fields: [donorId], references: [id]) assignments Assignment[] events OperationalEvent[] @@index([status, safetyDeadline]) @@index([donorId, createdAt]) }
-model Receiver { id String @id @default(cuid()) userId String @unique name String latitude Float longitude Float status String @default("open") receivingCapacity Int cleanWater Boolean cookingFacilities Boolean fuelAvailable Boolean coldStorage Boolean user User @relation(fields: [userId], references: [id]) demands ShelterDemand[] assignments Assignment[] }
-model ShelterDemand { id String @id @default(cuid()) receiverId String category ItemCategory requested Int remaining Int receiver Receiver @relation(fields: [receiverId], references: [id]) @@unique([receiverId, category]) }
-model Volunteer { id String @id @default(cuid()) userId String @unique name String vehicle String capacity Int currentLoad Int @default(0) status String @default("available") latitude Float longitude Float lastCheckIn DateTime? reliabilityScore Float @default(1) user User @relation(fields: [userId], references: [id]) assignments Assignment[] reservations Reservation[] }
-model Assignment { id String @id @default(cuid()) batchId String volunteerId String receiverId String quantity Int status AssignmentStatus @default(RESERVED) pickedUpAt DateTime? deliveredAt DateTime? etaMinutes Int? batch DonationBatch @relation(fields: [batchId], references: [id]) volunteer Volunteer @relation(fields: [volunteerId], references: [id]) receiver Receiver @relation(fields: [receiverId], references: [id]) reservation Reservation? events OperationalEvent[] @@index([batchId, status]) @@index([volunteerId, status]) }
-model Reservation { id String @id @default(cuid()) assignmentId String @unique volunteerId String status ReservationStatus @default(ACTIVE) expiresAt DateTime confirmBy DateTime? confirmedAt DateTime? assignment Assignment @relation(fields: [assignmentId], references: [id]) volunteer Volunteer @relation(fields: [volunteerId], references: [id]) @@index([status, expiresAt]) }
-model CompatibilityRule { id String @id @default(cuid()) category ItemCategory requiresCleanWater Boolean @default(false) requiresCooking Boolean @default(false) requiresFuel Boolean @default(false) requiresColdStorage Boolean @default(false) authorizedReceiver Boolean @default(false) maxTransitMinutes Int? }
-model OperationalEvent { id String @id @default(cuid()) type String message String metadata Json? createdAt DateTime @default(now()) userId String? batchId String? assignmentId String? user User? @relation(fields: [userId], references: [id]) batch DonationBatch? @relation(fields: [batchId], references: [id]) assignment Assignment? @relation(fields: [assignmentId], references: [id]) @@index([createdAt]) }
-model SimulationSession { id String @id @default(cuid()) name String seed String createdAt DateTime @default(now()) events Json? }
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  DONOR
+  VOLUNTEER
+  RECEIVER
+}
+
+enum BatchStatus {
+  AVAILABLE
+  RESERVED
+  PICKUP_CONFIRMED
+  IN_TRANSIT
+  PARTIALLY_DELIVERED
+  DELIVERED
+  EXPIRED
+  CANCELLED
+  REQUIRES_REVIEW
+}
+
+enum ItemCategory {
+  READY_TO_EAT
+  RAW_RATION
+  INFANT
+  MEDICAL
+  HYGIENE
+  EMERGENCY_ESSENTIAL
+}
+
+enum AssignmentStatus {
+  RESERVED
+  PICKUP_CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  REROUTED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  EXPIRED
+  RELEASED
+  CONFIRMED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  donor     Donor?
+  volunteer Volunteer?
+  receiver  Receiver?
+  events    OperationalEvent[]
+}
+
+model Donor {
+  id                 String          @id @default(cuid())
+  userId             String          @unique
+  name               String
+  pickupInstructions String?
+
+  user    User            @relation(fields: [userId], references: [id])
+  batches DonationBatch[]
+}
+
+model DonationBatch {
+  id                String      @id @default(cuid())
+  publicId          String      @unique
+  donorId           String
+  category          ItemCategory
+  description       String
+  quantity          Int
+  availableQuantity Int
+  unit              String
+  collectedAt       DateTime?
+  safetyDeadline    DateTime
+  handling          String?
+  temperatureMin    Float?
+  temperatureMax    Float?
+  status            BatchStatus @default(AVAILABLE)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  donor       Donor              @relation(fields: [donorId], references: [id])
+  assignments Assignment[]
+  events      OperationalEvent[]
+
+  @@index([status, safetyDeadline])
+  @@index([donorId, createdAt])
+}
+
+model Receiver {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  name              String
+  latitude          Float
+  longitude         Float
+  status            String  @default("open")
+  receivingCapacity Int
+  cleanWater        Boolean
+  cookingFacilities Boolean
+  fuelAvailable     Boolean
+  coldStorage       Boolean
+
+  user        User            @relation(fields: [userId], references: [id])
+  demands     ShelterDemand[]
+  assignments Assignment[]
+}
+
+model ShelterDemand {
+  id         String       @id @default(cuid())
+  receiverId String
+  category   ItemCategory
+  requested  Int
+  remaining  Int
+
+  receiver Receiver @relation(fields: [receiverId], references: [id])
+
+  @@unique([receiverId, category])
+}
+
+model Volunteer {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  name             String
+  vehicle          String
+  capacity         Int
+  currentLoad      Int      @default(0)
+  status           String   @default("available")
+  latitude         Float
+  longitude        Float
+  lastCheckIn      DateTime?
+  reliabilityScore Float    @default(1)
+
+  user         User          @relation(fields: [userId], references: [id])
+  assignments  Assignment[]
+  reservations Reservation[]
+}
+
+model Assignment {
+  id          String           @id @default(cuid())
+  batchId     String
+  volunteerId String
+  receiverId  String
+  quantity    Int
+  status      AssignmentStatus @default(RESERVED)
+  pickedUpAt  DateTime?
+  deliveredAt DateTime?
+  etaMinutes  Int?
+
+  batch       DonationBatch @relation(fields: [batchId], references: [id])
+  volunteer   Volunteer     @relation(fields: [volunteerId], references: [id])
+  receiver    Receiver      @relation(fields: [receiverId], references: [id])
+  reservation Reservation?
+  events      OperationalEvent[]
+
+  @@index([batchId, status])
+  @@index([volunteerId, status])
+}
+
+model Reservation {
+  id           String            @id @default(cuid())
+  assignmentId String            @unique
+  volunteerId  String
+  status       ReservationStatus @default(ACTIVE)
+  expiresAt    DateTime
+  confirmBy    DateTime?
+  confirmedAt  DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  volunteer  Volunteer  @relation(fields: [volunteerId], references: [id])
+
+  @@index([status, expiresAt])
+}
+
+model CompatibilityRule {
+  id                  String       @id @default(cuid())
+  category            ItemCategory
+  requiresCleanWater  Boolean      @default(false)
+  requiresCooking     Boolean      @default(false)
+  requiresFuel        Boolean      @default(false)
+  requiresColdStorage Boolean      @default(false)
+  authorizedReceiver  Boolean      @default(false)
+  maxTransitMinutes   Int?
+}
+
+model OperationalEvent {
+  id           String   @id @default(cuid())
+  type         String
+  message      String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  userId       String?
+  batchId      String?
+  assignmentId String?
+
+  user       User?           @relation(fields: [userId], references: [id])
+  batch      DonationBatch?  @relation(fields: [batchId], references: [id])
+  assignment Assignment?     @relation(fields: [assignmentId], references: [id])
+
+  @@index([createdAt])
+}
+
+model SimulationSession {
+  id        String   @id @default(cuid())
+  name      String
+  seed      String
+  createdAt DateTime @default(now())
+  events    Json?
+}

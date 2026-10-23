@@ -9,6 +9,15 @@
     "db:seed": "tsx prisma/seed.ts",
     "check-types": "tsc --noEmit"
   },
-  "dependencies": { "@prisma/client": "^6.7.0" },
-  "devDependencies": { "@repo/typescript-config": "*", "@types/node": "26.4.1", "prisma": "^6.7.0", "tsx": "^4.19.4", "typescript": "7.0.2" }
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "dotenv": "^18.0.9"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/node": "26.4.1",
+    "prisma": "6.19.3",
+    "tsx": "^4.19.4",
+    "typescript": "7.0.2"
+  }
 }
