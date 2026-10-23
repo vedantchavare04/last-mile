@@ -1,0 +1,14 @@
+{
+  "name": "@last-mile/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": { "@prisma/client": "^6.7.0" },
+  "devDependencies": { "@repo/typescript-config": "*", "@types/node": "26.4.1", "prisma": "^6.7.0", "tsx": "^4.19.4", "typescript": "7.0.2" }
+}

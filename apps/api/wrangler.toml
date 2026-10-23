@@ -1,0 +1,9 @@
+name = "last-mile-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-23"
+
+[vars]
+APP_ENV = "production"
+
+# Add DATABASE_URL as an encrypted secret with:
+# wrangler secret put DATABASE_URL
